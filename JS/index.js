@@ -1,46 +1,28 @@
-const startButton = document.getElementById('startButton');
 const previewElem = document.getElementById('preview');
 const canvasElem = document.getElementById('canvas');
 const resultElem = document.getElementById('result');
 
-// Function to start the camera with the specified deviceId
-function startCamera(deviceId) {
-  navigator.mediaDevices.getUserMedia({
-    video: { deviceId: deviceId ? { exact: deviceId } : undefined }
+navigator.mediaDevices.getUserMedia({
+  video: {
+    facingMode: 'environment',
+  },
+})
+  .then((stream) => {
+    previewElem.srcObject = stream;
+    previewElem.play();
+    scanQRCode();
   })
-    .then(stream => {
-      previewElem.srcObject = stream;
-      previewElem.play();
-      scanQRCode();
-    })
-    .catch(err => {
-      console.error("Error accessing webcam: ", err);
-    });
-}
-
-// Function to find and use the rear-facing camera
-function useRearCamera() {
-  navigator.mediaDevices.enumerateDevices()
-    .then(devices => {
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      const rearCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
-
-      if (rearCamera) {
-        startCamera(rearCamera.deviceId);
-      } else {
-        console.warn("Rear camera not found. Using default camera.");
-        startCamera(); // Use default camera if rear camera is not found
-      }
-    })
-    .catch(err => {
-      console.error("Error enumerating devices: ", err);
-    });
-}
-
-// Call the function to use the rear camera
-useRearCamera();
+  .catch((err) => {
+    console.error("Error accessing webcam: ", err);
+  });
 
 function scanQRCode() {
+  // Ensure the video element has valid dimensions
+  if (previewElem.videoWidth === 0 || previewElem.videoHeight === 0) {
+    requestAnimationFrame(scanQRCode); // Retry until the video is ready
+    return;
+  }
+
   const context = canvasElem.getContext('2d');
   const videoWidth = previewElem.videoWidth;
   const videoHeight = previewElem.videoHeight;
