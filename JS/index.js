@@ -4,7 +4,7 @@ const previewElem = document.getElementById('preview');
 const resultElem = document.getElementById('result');
 
 navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { exact: "environment" } }
+    video: { facingMode: "environment" }
 })
 .then(function (stream) {
     previewElem.srcObject = stream;
