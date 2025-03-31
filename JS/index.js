@@ -6,7 +6,6 @@ const resultElem = document.getElementById('result');
 navigator.mediaDevices.getUserMedia({ 
   video: { 
     facingMode: 'environment',
-    focusMode: 'continuous' // Enable autofocus
   }
 }) 
   .then(stream => {
