@@ -1,4 +1,4 @@
-const codeReader = new ZXing.BrowserQRCodeReader();
+const codeReader = new ZXing.BrowserMultiFormatReader();
 const startButton = document.getElementById('startButton');
 const previewElem = document.getElementById('preview');
 const resultElem = document.getElementById('result');
@@ -15,7 +15,12 @@ startButton.addEventListener('click', () => {
   codeReader.decodeFromVideoDevice(undefined, 'preview', (result) => {
       if (result) {
           console.log(result.text);
-          resultElem.textContent = result.text;
+          //faire un popup pour demander si on veut rediriger vers la page
+          const confirmation = confirm("Voulez-vous rediriger vers la page suivante ?");
+          if (confirmation) {
+            //reloade la page poure le moment
+            window.location.reload();
+          }
       } else {
           console.warn("No QR code detected.");
       }
