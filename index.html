@@ -13,17 +13,15 @@
   </div>
   <div class="scanner">
     <video id="preview" autoplay></video>
-    <canvas id="canvas" style="display: none;"></canvas>
+  </div>
+  <div class="button">
+    <button id="startButton">Démarrer la détection</button>
   </div>
   <div class="resultat">
     <h2>Résultat :</h2>
     <p id="result"></p>
   </div>
-
-  <!-- Include jsQR library -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <!-- Include your custom JavaScript -->
-  <script src="JS/index.js" defer></script>
 </body>
-
+<script src="https://unpkg.com/@zxing/library@0.17.1"></script>
+<script src="JS/index.js"></script>
 </html>
