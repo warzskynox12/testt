@@ -3,7 +3,12 @@ const previewElem = document.getElementById('preview');
 const canvasElem = document.getElementById('canvas');
 const resultElem = document.getElementById('result');
 
-navigator.mediaDevices.getUserMedia({ video: true })
+navigator.mediaDevices.getUserMedia({ 
+  video: { 
+    facingMode: 'environment',
+    focusMode: 'continuous' // Enable autofocus
+  }
+}) 
   .then(stream => {
     previewElem.srcObject = stream;
     previewElem.play();
