@@ -7,16 +7,35 @@
 
 <script type="text/javascript">
 
-$(document).ready(function() {
-	barcode.config.start = 0.1;
-	barcode.config.end = 0.9;
-	barcode.config.video = '#barcodevideo';
-	barcode.config.canvas = '#barcodecanvas';
-	barcode.config.canvasg = '#barcodecanvasg';
-	barcode.setHandler(function(barcode) {
-		$('#result').html(barcode);
-	});
-	barcode.init();
+$(document).ready(function () {
+  // Configure barcode.js
+  barcode.config.start = 0.1;
+  barcode.config.end = 0.9;
+  barcode.config.video = '#barcodevideo';
+  barcode.config.canvas = '#barcodecanvas';
+  barcode.config.canvasg = '#barcodecanvasg';
+
+  // Override the camera initialization to enable autofocus and rear camera
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: "environment", // Use the rear-facing camera
+      advanced: [{ focusMode: "continuous" }] // Enable autofocus
+    }
+  })
+  .then(function (stream) {
+    const videoElement = document.querySelector('#barcodevideo');
+    videoElement.srcObject = stream;
+    videoElement.play();
+    barcode.init(); // Initialize barcode.js after the video stream is ready
+  })
+  .catch(function (err) {
+    console.error("Error accessing the camera: ", err);
+  });
+
+  // Set the handler for detected barcodes
+  barcode.setHandler(function (barcode) {
+    $('#result').html(barcode);
+  });
 });
 
 </script>
@@ -25,10 +44,10 @@ $(document).ready(function() {
 <body>
 
 <div id="barcode">
-	<video id="barcodevideo" autoplay></video>
-	<canvas id="barcodecanvasg" ></canvas>
+  <video id="barcodevideo" autoplay></video>
+  <canvas id="barcodecanvasg"></canvas>
 </div>
-<canvas id="barcodecanvas" ></canvas>
+<canvas id="barcodecanvas"></canvas>
 <div id="result"></div>
 
 </body>
