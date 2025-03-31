@@ -17,10 +17,23 @@ function startScanner() {
         target: previewElem, // L'élément vidéo où afficher le flux
         constraints: {
           facingMode: "environment", // Utiliser la caméra arrière
+          focusMode: "continuous", // Mode de mise au point continue
         },
       },
       decoder: {
-        readers: ["code_128_reader", "ean_reader", "upc_reader"], // Formats de codes-barres à scanner
+        //metre tous les types de code barre
+        readers: [
+          "code_128_reader",
+          "ean_reader",
+          "ean_8_reader",
+          "code_39_reader",
+          "code_39_vin_reader",
+          "codabar_reader",
+          "upc_reader",
+          "upc_e_reader",
+          "i2of5_reader",
+          "2of5_reader",
+        ],
       },
     },
     (err) => {
