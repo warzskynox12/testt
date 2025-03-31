@@ -31,6 +31,7 @@ function scanQRCode() {
     if (qrCode) {
       console.log("QR Code détecté :", qrCode.data);
       alert(`QR Code détecté : ${qrCode.data}`);
+      document.getElementById("result").innerHTML = qrCode.data;
       return; // Arrêter le scan après avoir détecté un QR code
     }
   }
@@ -41,21 +42,31 @@ function scanQRCode() {
 
 // Démarrer la caméra et le scan
 startButton.addEventListener('click', () => {
-  // Arrêter tout flux vidéo existant
-  stopVideoStream(previewElem);
+    // Arrêter tout flux vidéo existant
+    stopVideoStream(previewElem);
+  
+    navigator.mediaDevices
+      .getUserMedia({
+        video: {
+          facingMode: "environment" // Utiliser la caméra arrière
+        }
+      })
+      .then((stream) => {
+        // Assigner le flux vidéo à l'élément <video>
+        previewElem.srcObject = stream;
+        previewElem.play();
 
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: "environment" // Utiliser la caméra arrière
-      }
-    })
-    .then((stream) => {
-      previewElem.srcObject = stream;
-      previewElem.play();
-
-      // Lancer le scan en continu
-      requestAnimationFrame(scanQRCode);
-    })
-    .catch((err) => console.error("Erreur lors de l'accès à la caméra :", err));
-});
+        // Activer l'autofocus si disponible
+        const track = stream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities();
+        if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
+          track.applyConstraints({
+            advanced: [{ focusMode: "continuous" }]
+          }).catch((err) => console.warn("Impossible d'activer l'autofocus :", err));
+        }
+  
+        // Lancer le scan en continu
+        requestAnimationFrame(scanQRCode);
+      })
+      .catch((err) => console.error("Erreur lors de l'accès à la caméra :", err));
+  });
