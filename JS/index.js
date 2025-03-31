@@ -12,10 +12,14 @@ navigator.mediaDevices.getUserMedia({
 });
 
 startButton.addEventListener('click', () => {
-    codeReader.decodeFromVideoDevice(undefined, 'preview', (result) => {
-        console.log(result.text);
-        resultElem.textContent = result.text;
-    });
+  codeReader.decodeFromVideoDevice(undefined, 'preview', (result) => {
+      if (result) {
+          console.log(result.text);
+          resultElem.textContent = result.text;
+      } else {
+          console.warn("No QR code detected.");
+      }
+  });
 });
 
 codeReader.getVideoInputDevices().then((videoInputDevices) => {
