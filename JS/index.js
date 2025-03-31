@@ -1,15 +1,31 @@
 const startButton = document.getElementById('startButton');
 const previewElem = document.getElementById('preview');
+const canvasElem = document.getElementById('canvas');
 const resultElem = document.getElementById('result');
+
+// Vérifier si les éléments HTML existent
+if (!startButton || !previewElem || !canvasElem || !resultElem) {
+  console.error("Un ou plusieurs éléments HTML requis sont introuvables.");
+  throw new Error("Initialisation interrompue : éléments HTML manquants.");
+}
 
 // Fonction pour arrêter le scanner
 function stopScanner() {
-  Quagga.stop();
-  console.log("Scanner arrêté.");
+  if (Quagga) {
+    Quagga.stop();
+    console.log("Scanner arrêté.");
+  } else {
+    console.warn("Quagga n'est pas initialisé.");
+  }
 }
 
 // Fonction pour démarrer le scanner
 function startScanner() {
+  if (!Quagga) {
+    console.error("Quagga n'est pas chargé.");
+    return;
+  }
+
   Quagga.init(
     {
       inputStream: {
@@ -21,7 +37,7 @@ function startScanner() {
         },
       },
       decoder: {
-        //metre tous les types de code barre
+        // Ajouter tous les types de code-barres
         readers: [
           "code_128_reader",
           "ean_reader",
@@ -53,18 +69,26 @@ function startScanner() {
 
   // Écouter les résultats du scanner
   Quagga.onProcessed((result) => {
-    if (result) {
+    if (result && Quagga.canvas && Quagga.canvas.dom && Quagga.canvas.dom.image) {
       const canvas = Quagga.canvas.dom.image;
       const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Activer willReadFrequently
-      console.log("Canvas traité avec willReadFrequently activé.");
+      if (ctx) {
+        console.log("Canvas traité avec willReadFrequently activé.");
+      } else {
+        console.warn("Impossible d'obtenir le contexte du canvas.");
+      }
     }
   });
 
   Quagga.onDetected((data) => {
-    console.log("Code-barres détecté :", data.codeResult.code);
-    alert(`Code-barres détecté : ${data.codeResult.code}`);
-    resultElem.innerHTML = `Code-barres détecté : ${data.codeResult.code}`;
-    stopScanner(); // Arrêter le scanner après avoir détecté un code-barres
+    if (data && data.codeResult && data.codeResult.code) {
+      console.log("Code-barres détecté :", data.codeResult.code);
+      alert(`Code-barres détecté : ${data.codeResult.code}`);
+      resultElem.innerHTML = `Code-barres détecté : ${data.codeResult.code}`;
+      stopScanner(); // Arrêter le scanner après avoir détecté un code-barres
+    } else {
+      console.warn("Résultat de détection invalide.");
+    }
   });
 }
 
