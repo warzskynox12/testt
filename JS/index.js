@@ -54,7 +54,8 @@ startButton.addEventListener('click', () => {
   navigator.mediaDevices
     .getUserMedia({
       video: {
-        facingMode: "environment" // Utiliser la caméra arrière
+        facingMode: "environment", // Utiliser la caméra arrière
+        focusMode: "continuous" // Activer l'autofocus continu
       }
     })
     .then((stream) => {
