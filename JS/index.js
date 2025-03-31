@@ -35,6 +35,11 @@ function startScanner() {
           "2of5_reader",
         ],
       },
+      locator: {
+        patchSize: "medium", // Taille des patchs pour la détection
+        halfSample: true, // Réduire la résolution pour améliorer les performances
+      },
+      locate: true, // Activer la localisation des codes-barres
     },
     (err) => {
       if (err) {
@@ -47,6 +52,14 @@ function startScanner() {
   );
 
   // Écouter les résultats du scanner
+  Quagga.onProcessed((result) => {
+    if (result) {
+      const canvas = Quagga.canvas.dom.image;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Activer willReadFrequently
+      console.log("Canvas traité avec willReadFrequently activé.");
+    }
+  });
+
   Quagga.onDetected((data) => {
     console.log("Code-barres détecté :", data.codeResult.code);
     alert(`Code-barres détecté : ${data.codeResult.code}`);
