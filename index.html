@@ -1,27 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Détection de code QR</title>
-</head>
+<link rel="stylesheet" href="style.css" />
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="barcode.js"></script>
 
+<script type="text/javascript">
+
+$(document).ready(function() {
+	barcode.config.start = 0.1;
+	barcode.config.end = 0.9;
+	barcode.config.video = '#barcodevideo';
+	barcode.config.canvas = '#barcodecanvas';
+	barcode.config.canvasg = '#barcodecanvasg';
+	barcode.setHandler(function(barcode) {
+		$('#result').html(barcode);
+	});
+	barcode.init();
+});
+
+</script>
+
+</head>
 <body>
-  <div class="titre">
-    <h1>Scanner QR Code</h1>
-  </div>
-  <div class="scanner">
-    <video id="preview" autoplay></video>
-  </div>
-  <div class="button">
-    <button id="startButton">Démarrer la détection</button>
-  </div>
-  <div class="resultat">
-    <h2>Résultat :</h2>
-    <p id="result"></p>
-  </div>
+
+<div id="barcode">
+	<video id="barcodevideo" autoplay></video>
+	<canvas id="barcodecanvasg" ></canvas>
+</div>
+<canvas id="barcodecanvas" ></canvas>
+<div id="result"></div>
+
 </body>
-<script src="https://unpkg.com/@zxing/library@0.17.1"></script>
-<script src="JS/index.js"></script>
 </html>
