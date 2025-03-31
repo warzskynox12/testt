@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détection de code QR</title>
+</head>
+
+<body>
+  <div class="titre">
+    <h1>Scanner QR Code</h1>
+  </div>
+  <div class="scanner">
+    <video id="preview" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+  </div>
+  <div class="button">
+    <button id="startButton">Démarrer la détection</button>
+  </div>
+  <div class="imput">
+    <input type="text" id="monInput" name="nom" placeholder="Saisissez votre texte ici">
+    <button id="monBouton">valider</button>
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script type="module" src="JS/index.js"></script>
+</html>
