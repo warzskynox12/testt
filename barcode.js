@@ -32,6 +32,19 @@ var barcode = function() {
 		'9': [3, 1, 1, 2]
 	};
 
+	var itf = {
+		'0': [1, 1, 2, 2, 1],
+		'1': [2, 1, 1, 1, 2],
+		'2': [1, 2, 1, 1, 2],
+		'3': [2, 2, 1, 1, 1],
+		'4': [1, 1, 2, 1, 2],
+		'5': [2, 1, 2, 1, 1],
+		'6': [1, 2, 2, 1, 1],
+		'7': [1, 1, 1, 2, 2],
+		'8': [2, 1, 1, 2, 1],
+		'9': [1, 2, 1, 2, 1]
+	};
+
 	var check = {
 		'oooooo': '0',
 		'ooeoee': '1',
@@ -58,26 +71,24 @@ var barcode = function() {
 	}
 
 	function init() {
-
 		window.URL = window.URL || window.webkitURL;
 		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
 		elements.video = document.querySelector(config.video);
 		elements.canvas = document.querySelector(config.canvas);
-		elements.ctx = elements.canvas.getContext('2d');
+		elements.ctx = elements.canvas.getContext('2d', { willReadFrequently: true }); // Added willReadFrequently
 		elements.canvasg = document.querySelector(config.canvasg);
-		elements.ctxg = elements.canvasg.getContext('2d');
+		elements.ctxg = elements.canvasg.getContext('2d', { willReadFrequently: true }); // Added willReadFrequently
 
 		if (navigator.getUserMedia) {
-			navigator.getUserMedia({audio: false, video: true}, function(stream) {
+			navigator.getUserMedia({ audio: false, video: true }, function (stream) {
 				elements.video.srcObject = stream;
-			}, function(error) {
+			}, function (error) {
 				console.log(error);
 			});
 		}
 
-		elements.video.addEventListener('canplay', function(e) {
-
+		elements.video.addEventListener('canplay', function (e) {
 			dimensions.height = elements.video.videoHeight;
 			dimensions.width = elements.video.videoWidth;
 
@@ -90,8 +101,7 @@ var barcode = function() {
 			elements.canvasg.height = dimensions.height;
 
 			drawGraphics();
-			setInterval(function(){snapshot()}, config.delay);
-
+			setInterval(function () { snapshot() }, config.delay);
 		}, false);
 	}
 
@@ -101,189 +111,78 @@ var barcode = function() {
 	}
 
 	function processImage() {
-
 		bars = [];
 
 		var pixels = [];
 		var binary = [];
 		var pixelBars = [];
 
-		// convert to grayscale
- 
+		// Convert to grayscale
 		var imgd = elements.ctx.getImageData(dimensions.start, dimensions.height * 0.5, dimensions.end - dimensions.start, 1);
 		var rgbpixels = imgd.data;
 
 		for (var i = 0, ii = rgbpixels.length; i < ii; i = i + 4) {
-			pixels.push(Math.round(rgbpixels[i] * 0.2126 + rgbpixels[i + 1] * 0.7152 + rgbpixels[ i + 2] * 0.0722));
+			pixels.push(Math.round(rgbpixels[i] * 0.2126 + rgbpixels[i + 1] * 0.7152 + rgbpixels[i + 2] * 0.0722));
 		}
 
-		// normalize and convert to binary
-
+		// Normalize and convert to binary
 		var min = Math.min.apply(null, pixels);
 		var max = Math.max.apply(null, pixels);
 
 		for (var i = 0, ii = pixels.length; i < ii; i++) {
-			if (Math.round((pixels[i] - min) / (max - min) * 255) > config.threshold) {				
+			if (Math.round((pixels[i] - min) / (max - min) * 255) > config.threshold) {
 				binary.push(1);
 			} else {
 				binary.push(0);
 			}
 		}
-		
-		// determine bar widths
 
-		var current = binary[0];
-		var count = 0;
+		// Detect ITF start pattern (1010)
+		var startPattern = [1, 0, 1, 0];
+		var startIndex = binary.join('').indexOf(startPattern.join(''));
 
-		for (var i = 0, ii = binary.length; i < ii; i++) {
-			if (binary[i] == current) {
-				count++;
-			} else {
-				pixelBars.push(count);
-				count = 1;
-				current = binary[i]
-			}
-		}
-		pixelBars.push(count);
-
-		// quality check
-
-		if (pixelBars.length < (3 + 24 + 5 + 24 + 3 + 1)) {
+		if (startIndex === -1) {
+			console.warn("No ITF start pattern found.");
 			return;
 		}
 
-		// find starting sequence
+		// Extract the barcode data between the start and stop patterns
+		var stopPattern = [1, 1, 0, 1];
+		var stopIndex = binary.join('').indexOf(stopPattern.join(''), startIndex + startPattern.length);
 
-		var startIndex = 0;
-		var minFactor = 0.5;
-		var maxFactor = 1.5;
-
-		for (var i = 3, ii = pixelBars.length; i < ii; i++) {
-			var refLength = (pixelBars[i] + pixelBars[i-1] + pixelBars[i-2]) / 3;
-			if (
-				(pixelBars[i] > (minFactor * refLength) || pixelBars[i] < (maxFactor * refLength))
-				&& (pixelBars[i-1] > (minFactor * refLength) || pixelBars[i-1] < (maxFactor * refLength))
-				&& (pixelBars[i-2] > (minFactor * refLength) || pixelBars[i-2] < (maxFactor * refLength))
-				&& (pixelBars[i-3] > 3 * refLength)
-			) {
-				startIndex = i - 2;
-				break;
-			}
-		}
-
-		console.log("startIndex: " + startIndex );
-
-		// return if no starting sequence found
-
-		if (startIndex == 0) {
+		if (stopIndex === -1) {
+			console.warn("No ITF stop pattern found.");
 			return;
 		}
 
-		// discard leading and trailing patterns
+		var barcodeData = binary.slice(startIndex + startPattern.length, stopIndex);
 
-		pixelBars = pixelBars.slice(startIndex, startIndex + 3 + 24 + 5 + 24 + 3);
-
-		console.log("pixelBars: " + pixelBars );
-
-		// calculate relative widths
-
-		var ref = (pixelBars[0] + pixelBars[1] + pixelBars[2]) / 3;
-		
-		for (var i = 0, ii = pixelBars.length; i < ii; i++) {
-			bars.push(Math.round(pixelBars[i] / ref * 100) / 100);
+		// Decode the ITF barcode
+		var result = [];
+		for (var i = 0; i < barcodeData.length; i += 10) {
+			var digitPair = barcodeData.slice(i, i + 10);
+			var digit1 = decodeITFDigit(digitPair.slice(0, 5));
+			var digit2 = decodeITFDigit(digitPair.slice(5, 10));
+			if (digit1 === null || digit2 === null) {
+				console.warn("Invalid ITF digit pair.");
+				return;
+			}
+			result.push(digit1, digit2);
 		}
 
-		// analyze pattern
-
-		analyze();
-
-	}	
-
-	function analyze() {
-
-		console.clear();
-
-		console.log("analyzing");
-
-		// determine parity first digit and reverse sequence if necessary
-
-		var first = normalize(bars.slice(3, 3 + 4), 7);
-		if (!isOdd(Math.round(first[1] + first[3]))) {
-			bars = bars.reverse();
+		console.log("ITF Barcode: " + result.join(''));
+		if (handler != null) {
+			handler(result.join(''));
 		}
+	}
 
-		// split into digits
-
-		var digits = [
-			normalize(bars.slice(3, 3 + 4), 7),
-			normalize(bars.slice(7, 7 + 4), 7),
-			normalize(bars.slice(11, 11 + 4), 7),
-			normalize(bars.slice(15, 15 + 4), 7),
-			normalize(bars.slice(19, 19 + 4), 7),
-			normalize(bars.slice(23, 23 + 4), 7),
-			normalize(bars.slice(32, 32 + 4), 7),
-			normalize(bars.slice(36, 36 + 4), 7),
-			normalize(bars.slice(40, 40 + 4), 7),
-			normalize(bars.slice(44, 44 + 4), 7),
-			normalize(bars.slice(48, 48 + 4), 7),
-			normalize(bars.slice(52, 52 + 4), 7)
-		]
-
-		console.log("digits: " + digits);
-
-		// determine parity and reverse if necessary
-
-		var parities = [];
-
-		for (var i = 0; i < 6; i++) {
-			if (parity(digits[i])) {
-				parities.push('o');
-			} else {
-				parities.push('e');
-				digits[i] = digits[i].reverse();
-			}
-		}		
-				
-		// identify digits
-		
-		var result = [];	
-		var quality = 0;
-
-		for (var i = 0, ii = digits.length; i < ii; i++) {
-
-			var distance = 9;
-			var bestKey = '';
-
-			for (key in upc) {
-				if (maxDistance(digits[i], upc[key]) < distance) {
-					distance = maxDistance(digits[i], upc[key]);
-					bestKey = key;
-				}	
-			}
-
-			result.push(bestKey);
-			if (distance > quality) {
-				quality = distance;
-			}
-		
-		}
-
-		console.log("result: " + result);	
-
-		// check digit
-		
-		var checkDigit = check[parities.join('')];
-
-		// output
-
-		console.log("quality: " + quality);
-
-		if(quality < config.quality) {
-			if (handler != null) {
-				handler(checkDigit + result.join(''));
+	function decodeITFDigit(pattern) {
+		for (var key in itf) {
+			if (JSON.stringify(itf[key]) === JSON.stringify(pattern)) {
+				return key;
 			}
 		}
-
+		return null;
 	}
 
 	function setHandler(h) {
