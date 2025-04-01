@@ -35,22 +35,16 @@
             console.log("Code détecté :", result.text);
           }
           if (err && !(err instanceof ZXing.NotFoundException)) {
-            document.getElementById('result').textContent = `no element`;
-          }
-        }, {
-          video: {
-            facingMode: "environment", // Utilisation de la caméra arrière
-            focusMode: "continuous", // Autofocus activé
-            advanced: [{ focusMode: "continuous" }, { frameRate: { ideal: 60, min: 30 } }, { width: { ideal: 3840 }, height: { ideal: 2160 } }] // Qualité maximale : 4K et 60 fps
+            console.error("Erreur de lecture :", err);
           }
         });
       } else {
         console.error("Aucun périphérique vidéo trouvé.");
-        document.getElementById('result').textContent = `no element`;
+        document.getElementById('result').textContent = `Aucun périphérique vidéo trouvé`;
       }
     }).catch(err => {
       console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
-      document.getElementById('result').textContent = `no element`;
+      document.getElementById('result').textContent = `Erreur d'accès à la caméra`;
     });
   </script>
 </body>
