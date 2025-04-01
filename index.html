@@ -19,57 +19,32 @@
     <video id="barcodevideo" autoplay></video>
   </div>
   <div id="result"></div>
-<script>
+
+  <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    // Liste les caméras disponibles
-    codeReader.listVideoInputDevices().then(videoInputDevices => {
+    // Démarre la caméra et détecte les codes-barres
+    codeReader
+      .listVideoInputDevices()
+      .then(videoInputDevices => {
         if (videoInputDevices.length > 0) {
-            // Sélectionne la caméra arrière si disponible
-            let backCamera = videoInputDevices.find(device => 
-                device.label.toLowerCase().includes("back") || 
-                device.label.toLowerCase().includes("rear")
-            );
-            
-            const selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
-
-            // Paramètres vidéo avec autofocus et haute résolution
-            const constraints = {
-                video: {
-                    deviceId: { exact: selectedDeviceId },
-                    width: { ideal: 1280 }, // Résolution HD pour une meilleure détection
-                    height: { ideal: 720 },
-                    focusMode: "continuous" // Autofocus activé
-                }
-            };
-
-            // Accéder à la caméra avec les paramètres
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(stream => {
-                    const videoElement = document.getElementById('barcodevideo');
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-
-                    // Activer la lecture des codes-barres (y compris ITF)
-                    codeReader.decodeFromVideoDevice(selectedDeviceId, 'barcodevideo', (result, err) => {
-                        if (result) {
-                            document.getElementById('result').textContent = `Code détecté : ${result.text}`;
-                            console.log("Code détecté :", result.text);
-                        }
-                        if (err && !(err instanceof ZXing.NotFoundException)) {
-                            console.error("Erreur :", err);
-                        }
-                    }, { formats: [ZXing.BarcodeFormat.ITF, ZXing.BarcodeFormat.CODE_128] }); // ITF activé
-                })
-                .catch(err => {
-                    console.error("Erreur d'accès à la caméra :", err);
-                });
+          const firstDeviceId = videoInputDevices[0].deviceId;
+          codeReader.decodeFromVideoDevice(firstDeviceId, 'barcodevideo', (result, err) => {
+            if (result) {
+              document.getElementById('result').textContent = `Code détecté : ${result.text}`;
+              console.log("Code détecté :", result.text);
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+              console.error("Erreur :", err);
+            }
+          });
         } else {
-            console.error("Aucun périphérique vidéo trouvé.");
+          console.error("Aucun périphérique vidéo trouvé.");
         }
-    }).catch(err => {
+      })
+      .catch(err => {
         console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
-    });
-</script>
+      });
+  </script>
 </body>
 </html>
