@@ -27,13 +27,11 @@
   <div id="barcode">
     <video id="barcodevideo" autoplay playsinline></video>
   </div>
-  <button id="flashToggle">Activer le flash</button>
   <div id="result"></div>
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
     let track;
-    let isFlashOn = false;
     
     // Accès aux périphériques vidéo
     codeReader.listVideoInputDevices().then(videoInputDevices => {
@@ -49,6 +47,17 @@
           if (err && !(err instanceof ZXing.NotFoundException)) {
             console.error("Erreur de lecture :", err);
           }
+        }, {
+          tryHarder: true, // Diminue la tolérance et force une analyse plus précise
+          formats: [
+            ZXing.BarcodeFormat.QR_CODE,
+            ZXing.BarcodeFormat.CODE_128,
+            ZXing.BarcodeFormat.CODE_39,
+            ZXing.BarcodeFormat.EAN_13,
+            ZXing.BarcodeFormat.EAN_8,
+            ZXing.BarcodeFormat.UPC_A,
+            ZXing.BarcodeFormat.UPC_E
+          ]
         }).catch(err => {
           console.error("Erreur lors de l'activation de la caméra :", err);
         });
@@ -71,15 +80,6 @@
     });
 
     // Gestion du bouton pour activer/désactiver le flash
-    document.getElementById('flashToggle').addEventListener('click', () => {
-      if (track && track.getCapabilities().torch) {
-        isFlashOn = !isFlashOn;
-        track.applyConstraints({ advanced: [{ torch: isFlashOn }] });
-        document.getElementById('flashToggle').textContent = isFlashOn ? "Désactiver le flash" : "Activer le flash";
-      } else {
-        alert("Le flash n'est pas supporté sur cet appareil.");
-      }
-    });
   </script>
 </body>
 </html>
