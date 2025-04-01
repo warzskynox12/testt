@@ -38,13 +38,11 @@
 <body>
   <h1>Scanner un QR Code</h1>
   <video id="barcodevideo" autoplay></video>
-  <button id="startButton">Démarrer la caméra</button>
   <div id="output"></div>
   <div id="error"></div>
 
   <script>
     const videoElement = document.querySelector('#barcodevideo');
-    const startButton = document.querySelector('#startButton');
     const outputElement = document.querySelector('#output');
     const errorElement = document.querySelector('#error');
 
@@ -71,7 +69,8 @@
       }
     }
 
-    startButton.addEventListener('click', startCamera);
+    // Démarre automatiquement la caméra et le scanner dès le chargement de la page
+    window.addEventListener('load', startCamera);
   </script>
 </body>
 </html>
