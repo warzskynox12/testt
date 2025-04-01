@@ -3,67 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scanner de Code-Barres avec ZXing</title>
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <title>Scanner QR Code</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <style>
-    #barcodevideo {
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    video {
       width: 100%;
-      max-width: 640px;
-      height: auto;
-      border: 1px solid #ccc;
-      filter: grayscale(100%) contrast(150%); /* Noir et blanc + contraste augmenté */
+      max-width: 600px;
+      margin: 20px auto;
+      display: block;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #output {
+      margin-top: 20px;
+      font-size: 18px;
+      color: green;
     }
   </style>
 </head>
 <body>
-  <div id="barcode">
-    <video id="barcodevideo" autoplay></video>
-  </div>
-  <div id="result"></div>
+  <h1>Scanner un QR Code</h1>
+  <video id="barcodevideo" autoplay></video>
+  <button id="startButton">Démarrer la caméra</button>
+  <div id="output"></div>
 
   <script>
-    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoElement = document.querySelector('#barcodevideo');
+    const startButton = document.querySelector('#startButton');
+    const outputElement = document.querySelector('#output');
 
-    // Récupère la liste des caméras disponibles
-    codeReader.listVideoInputDevices().then(devices => {
-      const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
-
-      if (backCamera) {
-        const videoElement = document.getElementById('barcodevideo');
-        startScanner(backCamera.deviceId, videoElement);
-      } else {
-        console.error("Aucune caméra arrière trouvée.");
-        document.getElementById('result').textContent = "Aucune caméra arrière disponible.";
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        videoElement.srcObject = stream;
+        scanQRCode(videoElement);
+      } catch (error) {
+        console.error("Erreur lors de l'accès à la caméra : ", error);
+        outputElement.textContent = "Impossible d'accéder à la caméra.";
       }
-    }).catch(err => {
-      console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
-      document.getElementById('result').textContent = "Erreur lors de l'accès aux caméras.";
-    });
-
-    function startScanner(deviceId, videoElement) {
-      // Arrêter toute détection en cours avant de démarrer avec une nouvelle caméra
-      codeReader.reset();
-
-      // Lancer la détection avec la caméra arrière, sans tolérance excessive
-      codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err) => {
-        if (result) {
-          document.getElementById('result').textContent = `Code détecté : ${result.text}`;
-          console.log("Code détecté :", result.text);
-        }
-        if (err && !(err instanceof ZXing.NotFoundException)) {
-          document.getElementById('result').textContent = "Erreur : Aucun code détecté ou code invalide.";
-        }
-      }, {
-        video: {
-          facingMode: { exact: 'environment' }, // Utilisation de la caméra arrière
-          focusMode: 'continuous' // Autofocus activé
-        },
-        // Ajouter des options supplémentaires pour limiter les tolérances (facultatif)
-        formats: [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.QR_CODE], // Limiter aux formats souhaités
-        tryHarder: true, // Force la détection plus rigoureuse, mais peut prendre plus de temps
-        timeBetweenScanCalls: 500, // Réduit la fréquence des appels pour plus de précision
-      });
     }
+
+    function scanQRCode(videoElement) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      function draw() {
+        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+          canvas.width = videoElement.videoWidth;
+          canvas.height = videoElement.videoHeight;
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+          if (code) {
+            console.log("QR Code détecté : ", code.data);
+            outputElement.textContent = `QR Code détecté : ${code.data}`;
+          }
+        }
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+    }
+
+    startButton.addEventListener('click', startCamera);
   </script>
 </body>
 </html>
