@@ -11,6 +11,7 @@
       max-width: 640px;
       height: auto;
       border: 1px solid #ccc;
+      filter: grayscale(100%) contrast(150%); /* Noir et blanc + contraste augmenté */
     }
   </style>
 </head>
@@ -22,35 +23,43 @@
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
-    
-    // Accès aux périphériques vidéo
-    codeReader.listVideoInputDevices().then(videoInputDevices => {
-      if (videoInputDevices.length > 0) {
-        // Sélectionne la caméra arrière si disponible
-        const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back')) || videoInputDevices[0];
-        
-        codeReader.decodeFromVideoDevice(backCamera.deviceId, 'barcodevideo', (result, err) => {
-          if (result) {
-            document.getElementById('result').textContent = `Code détecté : ${result.text}`;
-            console.log("Code détecté :", result.text);
-          }
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            document.getElementById('result').textContent = `no element`;
-          }
-        }, {
-          video: {
-            facingMode: { exact: 'environment' }, // Utilisation de la caméra arrière
-            focusMode: 'continuous' // Autofocus activé
-          }
-        });
+
+    // Récupère la liste des caméras disponibles
+    codeReader.listVideoInputDevices().then(devices => {
+      const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
+
+      if (backCamera) {
+        const videoElement = document.getElementById('barcodevideo');
+        startScanner(backCamera.deviceId, videoElement);
       } else {
-        console.error("Aucun périphérique vidéo trouvé.");
-        document.getElementById('result').textContent = `no element`;
+        console.error("Aucune caméra arrière trouvée.");
+        document.getElementById('result').textContent = "Aucune caméra arrière disponible.";
       }
     }).catch(err => {
       console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
-      document.getElementById('result').textContent = `no element`;
+      document.getElementById('result').textContent = "Erreur lors de l'accès aux caméras.";
     });
+
+    function startScanner(deviceId, videoElement) {
+      // Arrêter toute détection en cours avant de démarrer avec une nouvelle caméra
+      codeReader.reset();
+
+      // Lancer la détection avec la caméra arrière
+      codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err) => {
+        if (result) {
+          document.getElementById('result').textContent = `Code détecté : ${result.text}`;
+          console.log("Code détecté :", result.text);
+        }
+        if (err && !(err instanceof ZXing.NotFoundException)) {
+          document.getElementById('result').textContent = "Aucun code détecté.";
+        }
+      }, {
+        video: {
+          facingMode: { exact: 'environment' }, // Utilisation de la caméra arrière
+          focusMode: 'continuous' // Autofocus activé
+        }
+      });
+    }
   </script>
 </body>
 </html>
