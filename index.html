@@ -18,11 +18,6 @@
       margin: 20px auto;
       display: block;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
     #output {
       margin-top: 20px;
       font-size: 18px;
@@ -52,17 +47,31 @@
         videoElement.srcObject = stream;
         errorElement.textContent = ""; // Clear any previous error messages
 
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         const scanner = new BarcodeScanner();
         console.log("Scanner initialisé.");
 
-        scanner.scanFromVideo(videoElement, (result) => {
-          if (result) {
-            console.log("Code détecté : ", result);
-            outputElement.textContent = `Code détecté : ${result}`;
-          } else {
-            console.log("Aucun code détecté pour le moment.");
+        function scanFrame() {
+          if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const result = scanner.scan(imageData);
+
+            if (result) {
+              console.log("Code détecté : ", result);
+              outputElement.textContent = `Code détecté : ${result}`;
+            } else {
+              console.log("Aucun code détecté pour le moment.");
+            }
           }
-        });
+          requestAnimationFrame(scanFrame);
+        }
+
+        scanFrame();
       } catch (error) {
         console.error("Erreur lors de l'accès à la caméra : ", error);
         errorElement.textContent = "Impossible d'accéder à la caméra.";
