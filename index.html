@@ -41,7 +41,7 @@
           video: {
             facingMode: "environment", // Utilisation de la caméra arrière
             focusMode: "continuous", // Autofocus activé
-            advanced: [{ focusMode: "continuous" }, { zoom: 3 }, { torch: true }] // Augmentation du zoom pour détecter les petits codes-barres et activation du flash
+            advanced: [{ focusMode: "continuous" }, { frameRate: { ideal: 10, min: 5 } }, { width: { ideal: 640 }, height: { ideal: 480 } }] // Réduction de la qualité pour améliorer la détection
           }
         });
       } else {
