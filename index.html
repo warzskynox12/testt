@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barcode Scanner with ZXing</title>
+  <title>Scanner de Code-Barres avec ZXing</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
     #barcodevideo {
@@ -12,39 +12,76 @@
       height: auto;
       border: 1px solid #ccc;
     }
+    #cameraSelect {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="barcode">
+    <select id="cameraSelect">
+      <option value="">Choisissez une caméra</option>
+    </select>
     <video id="barcodevideo" autoplay></video>
   </div>
   <div id="result"></div>
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
+    let videoInputDevices = [];
 
-    // Démarre la caméra et détecte les codes-barres
-    codeReader
-      .listVideoInputDevices()
-      .then(videoInputDevices => {
-        if (videoInputDevices.length > 0) {
-          const firstDeviceId = videoInputDevices[0].deviceId;
-          codeReader.decodeFromVideoDevice(firstDeviceId, 'barcodevideo', (result, err) => {
-            if (result) {
-              document.getElementById('result').textContent = `Code détecté : ${result.text}`;
-              console.log("Code détecté :", result.text);
-            }
-            if (err && !(err instanceof ZXing.NotFoundException)) {
-              console.error("Erreur :", err);
-            }
-          });
-        } else {
-          console.error("Aucun périphérique vidéo trouvé.");
+    // Récupère la liste des caméras disponibles
+    codeReader.listVideoInputDevices().then(devices => {
+      videoInputDevices = devices;
+      const cameraSelect = document.getElementById('cameraSelect');
+
+      if (videoInputDevices.length > 0) {
+        // Remplir le menu déroulant avec les caméras disponibles
+        videoInputDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `Caméra ${index + 1}`;
+          cameraSelect.appendChild(option);
+        });
+
+        // Initialiser la caméra sélectionnée
+        cameraSelect.addEventListener('change', (event) => {
+          const deviceId = event.target.value;
+          if (deviceId) {
+            startScanner(deviceId);
+          }
+        });
+      } else {
+        console.error("Aucun périphérique vidéo trouvé.");
+        document.getElementById('result').textContent = "Aucune caméra disponible.";
+      }
+    }).catch(err => {
+      console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
+      document.getElementById('result').textContent = "Erreur lors de l'accès aux caméras.";
+    });
+
+    function startScanner(deviceId) {
+      const videoElement = document.getElementById('barcodevideo');
+
+      // Arrêter toute détection en cours avant de démarrer avec une nouvelle caméra
+      codeReader.reset();
+
+      // Lancer la détection avec la caméra choisie
+      codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err) => {
+        if (result) {
+          document.getElementById('result').textContent = `Code détecté : ${result.text}`;
+          console.log("Code détecté :", result.text);
         }
-      })
-      .catch(err => {
-        console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
+        if (err && !(err instanceof ZXing.NotFoundException)) {
+          document.getElementById('result').textContent = "Aucun code détecté.";
+        }
+      }, {
+        video: {
+          facingMode: { exact: 'environment' }, // Utilisation de la caméra arrière
+          focusMode: 'continuous' // Autofocus activé
+        }
       });
+    }
   </script>
 </body>
 </html>
