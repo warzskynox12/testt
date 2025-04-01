@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scanner QR Code</title>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script src="https://unpkg.com/barcode-scanner"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -45,34 +45,16 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         videoElement.srcObject = stream;
-        scanQRCode(videoElement);
+
+        const scanner = new BarcodeScanner();
+        scanner.scanFromVideo(videoElement, (result) => {
+          console.log("Code détecté : ", result);
+          outputElement.textContent = `Code détecté : ${result}`;
+        });
       } catch (error) {
         console.error("Erreur lors de l'accès à la caméra : ", error);
         outputElement.textContent = "Impossible d'accéder à la caméra.";
       }
-    }
-
-    function scanQRCode(videoElement) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      function draw() {
-        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-          canvas.width = videoElement.videoWidth;
-          canvas.height = videoElement.videoHeight;
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-          if (code) {
-            console.log("QR Code détecté : ", code.data);
-            outputElement.textContent = `QR Code détecté : ${code.data}`;
-          }
-        }
-        requestAnimationFrame(draw);
-      }
-
-      draw();
     }
 
     startButton.addEventListener('click', startCamera);
