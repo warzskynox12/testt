@@ -21,7 +21,6 @@
   <div id="result"></div>
 <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
-
     // Démarre la caméra et détecte les codes-barres
     codeReader
       .listVideoInputDevices()
@@ -35,15 +34,33 @@
           
           const selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
 
-          codeReader.decodeFromVideoDevice(selectedDeviceId, 'barcodevideo', (result, err) => {
-            if (result) {
-              document.getElementById('result').textContent = `Code détecté : ${result.text}`;
-              console.log("Code détecté :", result.text);
+          // Paramètres pour activer l'autofocus
+          const constraints = {
+            video: {
+              deviceId: { exact: selectedDeviceId },
+              focusMode: "continuous"  // Demande l'autofocus en continu
             }
-            if (err && !(err instanceof ZXing.NotFoundException)) {
-              console.error("Erreur :", err);
-            }
-          });
+          };
+
+          navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+              const videoElement = document.getElementById('barcodevideo');
+              videoElement.srcObject = stream;
+              videoElement.play();
+              
+              codeReader.decodeFromVideoElement(videoElement, (result, err) => {
+                if (result) {
+                  document.getElementById('result').textContent = `Code détecté : ${result.text}`;
+                  console.log("Code détecté :", result.text);
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                  console.error("Erreur :", err);
+                }
+              });
+            })
+            .catch(err => {
+              console.error("Erreur d'accès à la caméra :", err);
+            });
         } else {
           console.error("Aucun périphérique vidéo trouvé.");
         }
