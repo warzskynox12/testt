@@ -19,8 +19,7 @@
     <video id="barcodevideo" autoplay></video>
   </div>
   <div id="result"></div>
-
-  <script>
+<script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
 
     // Démarre la caméra et détecte les codes-barres
@@ -28,8 +27,15 @@
       .listVideoInputDevices()
       .then(videoInputDevices => {
         if (videoInputDevices.length > 0) {
-          const firstDeviceId = videoInputDevices[0].deviceId;
-          codeReader.decodeFromVideoDevice(firstDeviceId, 'barcodevideo', (result, err) => {
+          // Sélection de la caméra arrière si disponible
+          let backCamera = videoInputDevices.find(device => 
+            device.label.toLowerCase().includes("back") || 
+            device.label.toLowerCase().includes("rear")
+          );
+          
+          const selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
+
+          codeReader.decodeFromVideoDevice(selectedDeviceId, 'barcodevideo', (result, err) => {
             if (result) {
               document.getElementById('result').textContent = `Code détecté : ${result.text}`;
               console.log("Code détecté :", result.text);
@@ -45,6 +51,6 @@
       .catch(err => {
         console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
       });
-  </script>
+</script>
 </body>
 </html>
