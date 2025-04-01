@@ -44,20 +44,24 @@
       // Arrêter toute détection en cours avant de démarrer avec une nouvelle caméra
       codeReader.reset();
 
-      // Lancer la détection avec la caméra arrière
+      // Lancer la détection avec la caméra arrière, sans tolérance excessive
       codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err) => {
         if (result) {
           document.getElementById('result').textContent = `Code détecté : ${result.text}`;
           console.log("Code détecté :", result.text);
         }
         if (err && !(err instanceof ZXing.NotFoundException)) {
-          document.getElementById('result').textContent = "Aucun code détecté.";
+          document.getElementById('result').textContent = "Erreur : Aucun code détecté ou code invalide.";
         }
       }, {
         video: {
           facingMode: { exact: 'environment' }, // Utilisation de la caméra arrière
           focusMode: 'continuous' // Autofocus activé
-        }
+        },
+        // Ajouter des options supplémentaires pour limiter les tolérances (facultatif)
+        formats: [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.QR_CODE], // Limiter aux formats souhaités
+        tryHarder: true, // Force la détection plus rigoureuse, mais peut prendre plus de temps
+        timeBetweenScanCalls: 500, // Réduit la fréquence des appels pour plus de précision
       });
     }
   </script>
