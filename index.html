@@ -12,16 +12,28 @@
       height: auto;
       border: 1px solid #ccc;
     }
+    #flashToggle {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
   <div id="barcode">
     <video id="barcodevideo" autoplay playsinline></video>
   </div>
+  <button id="flashToggle">Activer le flash</button>
   <div id="result"></div>
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
+    let track;
+    let isFlashOn = false;
     
     // Accès aux périphériques vidéo
     codeReader.listVideoInputDevices().then(videoInputDevices => {
@@ -37,7 +49,18 @@
           if (err && !(err instanceof ZXing.NotFoundException)) {
             console.error("Erreur de lecture :", err);
           }
+        }).catch(err => {
+          console.error("Erreur lors de l'activation de la caméra :", err);
         });
+
+        // Active le flash si possible
+        navigator.mediaDevices.getUserMedia({ video: { deviceId: backCamera.deviceId } })
+          .then(stream => {
+            track = stream.getVideoTracks()[0];
+          })
+          .catch(err => {
+            console.error("Impossible d'accéder à la caméra :", err);
+          });
       } else {
         console.error("Aucun périphérique vidéo trouvé.");
         document.getElementById('result').textContent = `Aucun périphérique vidéo trouvé`;
@@ -45,6 +68,17 @@
     }).catch(err => {
       console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
       document.getElementById('result').textContent = `Erreur d'accès à la caméra`;
+    });
+
+    // Gestion du bouton pour activer/désactiver le flash
+    document.getElementById('flashToggle').addEventListener('click', () => {
+      if (track && track.getCapabilities().torch) {
+        isFlashOn = !isFlashOn;
+        track.applyConstraints({ advanced: [{ torch: isFlashOn }] });
+        document.getElementById('flashToggle').textContent = isFlashOn ? "Désactiver le flash" : "Activer le flash";
+      } else {
+        alert("Le flash n'est pas supporté sur cet appareil.");
+      }
     });
   </script>
 </body>
