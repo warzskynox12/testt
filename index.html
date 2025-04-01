@@ -28,6 +28,11 @@
       font-size: 18px;
       color: green;
     }
+    #error {
+      margin-top: 10px;
+      font-size: 16px;
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -35,25 +40,34 @@
   <video id="barcodevideo" autoplay></video>
   <button id="startButton">Démarrer la caméra</button>
   <div id="output"></div>
+  <div id="error"></div>
 
   <script>
     const videoElement = document.querySelector('#barcodevideo');
     const startButton = document.querySelector('#startButton');
     const outputElement = document.querySelector('#output');
+    const errorElement = document.querySelector('#error');
 
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         videoElement.srcObject = stream;
+        errorElement.textContent = ""; // Clear any previous error messages
 
         const scanner = new BarcodeScanner();
+        console.log("Scanner initialisé.");
+
         scanner.scanFromVideo(videoElement, (result) => {
-          console.log("Code détecté : ", result);
-          outputElement.textContent = `Code détecté : ${result}`;
+          if (result) {
+            console.log("Code détecté : ", result);
+            outputElement.textContent = `Code détecté : ${result}`;
+          } else {
+            console.log("Aucun code détecté pour le moment.");
+          }
         });
       } catch (error) {
         console.error("Erreur lors de l'accès à la caméra : ", error);
-        outputElement.textContent = "Impossible d'accéder à la caméra.";
+        errorElement.textContent = "Impossible d'accéder à la caméra.";
       }
     }
 
