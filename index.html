@@ -12,15 +12,6 @@
       height: auto;
       border: 1px solid #ccc;
     }
-    #flashToggle {
-      margin-top: 10px;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-    }
   </style>
 </head>
 <body>
@@ -31,7 +22,6 @@
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
-    let track;
     
     // Accès aux périphériques vidéo
     codeReader.listVideoInputDevices().then(videoInputDevices => {
@@ -45,41 +35,23 @@
             console.log("Code détecté :", result.text);
           }
           if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error("Erreur de lecture :", err);
+            document.getElementById('result').textContent = `no element`;
           }
         }, {
-          tryHarder: true, // Diminue la tolérance et force une analyse plus précise
-          formats: [
-            ZXing.BarcodeFormat.QR_CODE,
-            ZXing.BarcodeFormat.CODE_128,
-            ZXing.BarcodeFormat.CODE_39,
-            ZXing.BarcodeFormat.EAN_13,
-            ZXing.BarcodeFormat.EAN_8,
-            ZXing.BarcodeFormat.UPC_A,
-            ZXing.BarcodeFormat.UPC_E
-          ]
-        }).catch(err => {
-          console.error("Erreur lors de l'activation de la caméra :", err);
+          video: {
+            facingMode: "environment", // Utilisation de la caméra arrière
+            focusMode: "continuous", // Autofocus activé
+            advanced: [{ focusMode: "continuous" }, { zoom: 3 }, { torch: true }] // Augmentation du zoom pour détecter les petits codes-barres et activation du flash
+          }
         });
-
-        // Active le flash si possible
-        navigator.mediaDevices.getUserMedia({ video: { deviceId: backCamera.deviceId } })
-          .then(stream => {
-            track = stream.getVideoTracks()[0];
-          })
-          .catch(err => {
-            console.error("Impossible d'accéder à la caméra :", err);
-          });
       } else {
         console.error("Aucun périphérique vidéo trouvé.");
-        document.getElementById('result').textContent = `Aucun périphérique vidéo trouvé`;
+        document.getElementById('result').textContent = `no element`;
       }
     }).catch(err => {
       console.error("Erreur lors de l'accès aux périphériques vidéo :", err);
-      document.getElementById('result').textContent = `Erreur d'accès à la caméra`;
+      document.getElementById('result').textContent = `no element`;
     });
-
-    // Gestion du bouton pour activer/désactiver le flash
   </script>
 </body>
 </html>
